@@ -93,11 +93,13 @@
                             
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <RadioButton x:Name="DhcpRadioButton" Content="自动获取IP地址(DHCP)" 
+                                           GroupName="IpConfigGroup"
                                            Checked="DhcpRadioButton_Checked" IsChecked="True"/>
                             </StackPanel>
                             
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
                                 <RadioButton x:Name="StaticRadioButton" Content="使用下面的IP地址" 
+                                           GroupName="IpConfigGroup"
                                            Checked="StaticRadioButton_Checked"/>
                             </StackPanel>
                             

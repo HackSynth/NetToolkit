@@ -152,14 +152,36 @@ namespace NetToolkit
                 
                 foreach (ManagementObject mo in collection)
                 {
-                    // 启用DHCP
+                    // 启用DHCP获取IP地址
                     var result = mo.InvokeMethod("EnableDHCP", null);
                     var returnValue = (uint)result;
                     
-                    if (returnValue != 0)
+                    if (returnValue != 0 && returnValue != 1) // 0=成功, 1=需要重启
                     {
                         throw new InvalidOperationException($"启用DHCP失败，错误代码: {returnValue}");
                     }
+
+                    // 清除自定义DNS设置，让系统使用DHCP分配的DNS
+                    try
+                    {
+                        var dnsParams = mo.GetMethodParameters("SetDNSServerSearchOrder");
+                        dnsParams["DNSServerSearchOrder"] = null; // 设置为null清除自定义DNS
+                        
+                        var dnsResult = mo.InvokeMethod("SetDNSServerSearchOrder", dnsParams, null);
+                        var dnsReturnValue = (uint)dnsResult["ReturnValue"];
+                        
+                        // DNS设置失败不应该阻止DHCP启用，只记录警告
+                        if (dnsReturnValue != 0 && dnsReturnValue != 1)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"清除DNS设置时出现警告，错误代码: {dnsReturnValue}");
+                        }
+                    }
+                    catch (Exception dnsEx)
+                    {
+                        // DNS清除失败不应该影响DHCP启用
+                        System.Diagnostics.Debug.WriteLine($"清除DNS设置失败: {dnsEx.Message}");
+                    }
+                    
                     break;
                 }
             }
