@@ -322,51 +322,79 @@ namespace NetToolkit
 
         private async Task PingIpAddressesAsync(List<string> ipAddresses, int timeout, CancellationToken cancellationToken)
         {
-            var semaphore = new SemaphoreSlim(Environment.ProcessorCount * 2); // 限制并发数
+            // 根据IP数量和系统性能动态调整并发数
+            var processorCount = Environment.ProcessorCount;
+            var baseThreads = Math.Min(ipAddresses.Count, processorCount * 8); // 基于处理器核心数的8倍
+            var maxConcurrency = Math.Min(Math.Max(baseThreads, 32), 128); // 最小32，最大128线程
+            var semaphore = new SemaphoreSlim(maxConcurrency);
+            
+            var completedCount = 0;
+            var lockObject = new object();
+
             var tasks = ipAddresses.Select(async ip =>
             {
                 await semaphore.WaitAsync(cancellationToken);
                 try
                 {
-                    return await PingSingleAddressAsync(ip, timeout, cancellationToken);
+                    var result = await PingSingleAddressAsync(ip, timeout, cancellationToken);
+                    
+                    // 使用低优先级调度器实时更新UI，避免阻塞主线程
+                    _ = Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        try
+                        {
+                            _pingResults.Add(result);
+                            UpdateCounters(result);
+                            
+                            lock (lockObject)
+                            {
+                                completedCount++;
+                                if (PingProgressBar != null)
+                                    PingProgressBar.Value = completedCount;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            SetStatusMessage($"更新结果失败: {ex.Message}");
+                        }
+                    }), System.Windows.Threading.DispatcherPriority.Background);
+                    
+                    return result;
                 }
                 finally
                 {
                     semaphore.Release();
                 }
-            });
+            }).ToArray(); // 转换为数组避免多次枚举
 
             try
             {
-                var results = await Task.WhenAll(tasks);
+                // 使用ConfigureAwait(false)避免死锁，提高性能
+                await Task.WhenAll(tasks).ConfigureAwait(false);
                 
-                foreach (var result in results)
+                Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (cancellationToken.IsCancellationRequested) break;
-                    
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        try
-                        {
-                            _pingResults.Add(result);
-                            if (PingProgressBar != null)
-                                PingProgressBar.Value++;
-                            UpdateCounters(result);
-                        }
-                        catch (Exception ex)
-                        {
-                            ShowErrorMessage($"更新结果失败: {ex.Message}");
-                        }
-                    });
-                }
+                    SetStatusMessage($"Ping操作完成，共处理{ipAddresses.Count}个IP地址");
+                });
             }
             catch (OperationCanceledException)
             {
-                SetStatusMessage("Ping操作已取消");
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    SetStatusMessage($"Ping操作已取消，已完成{completedCount}/{ipAddresses.Count}个IP地址");
+                });
             }
             catch (Exception ex)
             {
-                ShowErrorMessage($"批量Ping失败: {ex.Message}");
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    ShowErrorMessage($"批量Ping失败: {ex.Message}");
+                    SetStatusMessage("批量Ping操作失败");
+                });
+            }
+            finally
+            {
+                semaphore?.Dispose();
             }
         }
 
@@ -380,25 +408,44 @@ namespace NetToolkit
 
             try
             {
+                // 检查取消请求，避免不必要的网络操作
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // 使用using确保资源正确释放
                 using var ping = new Ping();
-                var reply = await ping.SendPingAsync(ipAddress, timeout);
                 
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    result.Status = "已取消";
-                    result.Notes = "操作被取消";
-                    return result;
-                }
+                // 设置ping选项以提高性能
+                var buffer = new byte[32]; // 标准ping包大小
+                var options = new PingOptions(64, true); // TTL=64，不允许分片
+                
+                // 异步ping操作，传入取消令牌
+                var reply = await ping.SendPingAsync(ipAddress, timeout, buffer, options);
+                
+                // 再次检查取消请求
+                cancellationToken.ThrowIfCancellationRequested();
 
                 switch (reply.Status)
                 {
                     case IPStatus.Success:
                         result.Status = "成功";
                         result.ResponseTime = reply.RoundtripTime;
+                        result.Notes = $"TTL={reply.Options?.Ttl ?? 0}";
                         break;
                     case IPStatus.TimedOut:
                         result.Status = "超时";
-                        result.Notes = "请求超时";
+                        result.Notes = $"请求超时 (>{timeout}ms)";
+                        break;
+                    case IPStatus.DestinationHostUnreachable:
+                        result.Status = "失败";
+                        result.Notes = "目标主机不可达";
+                        break;
+                    case IPStatus.DestinationNetworkUnreachable:
+                        result.Status = "失败";
+                        result.Notes = "目标网络不可达";
+                        break;
+                    case IPStatus.BadDestination:
+                        result.Status = "失败";
+                        result.Notes = "无效的目标地址";
                         break;
                     default:
                         result.Status = "失败";
@@ -406,10 +453,30 @@ namespace NetToolkit
                         break;
                 }
             }
+            catch (OperationCanceledException)
+            {
+                result.Status = "已取消";
+                result.Notes = "操作被取消";
+            }
+            catch (PingException pingEx)
+            {
+                result.Status = "错误";
+                result.Notes = $"Ping错误: {(pingEx.Message.Length > 30 ? pingEx.Message.Substring(0, 30) + "..." : pingEx.Message)}";
+            }
+            catch (ArgumentException argEx)
+            {
+                result.Status = "错误";
+                result.Notes = $"参数错误: {argEx.Message}";
+            }
+            catch (ObjectDisposedException)
+            {
+                result.Status = "已取消";
+                result.Notes = "操作被取消";
+            }
             catch (Exception ex)
             {
                 result.Status = "错误";
-                result.Notes = ex.Message.Length > 50 ? ex.Message.Substring(0, 50) + "..." : ex.Message;
+                result.Notes = ex.Message.Length > 40 ? ex.Message.Substring(0, 40) + "..." : ex.Message;
             }
 
             return result;
@@ -421,7 +488,52 @@ namespace NetToolkit
             
             try
             {
-                if (input.Contains("-"))
+                if (input.Contains("/"))
+                {
+                    // CIDR格式: 172.10.20.1/24
+                    var parts = input.Split('/');
+                    if (parts.Length == 2)
+                    {
+                        var networkIp = parts[0].Trim();
+                        var cidrString = parts[1].Trim();
+                        
+                        if (IPAddress.TryParse(networkIp, out var networkAddr) && 
+                            int.TryParse(cidrString, out var cidr) && 
+                            cidr >= 0 && cidr <= 32)
+                        {
+                            var networkBytes = networkAddr.GetAddressBytes();
+                            var networkInt = BitConverter.ToUInt32(networkBytes.Reverse().ToArray(), 0);
+                            
+                            // 计算子网掩码
+                            var hostBits = 32 - cidr;
+                            var hostCount = (uint)Math.Pow(2, hostBits);
+                            
+                            // 限制生成的IP数量，避免过多IP
+                            if (hostCount > 1024)
+                            {
+                                throw new ArgumentException($"网段过大（/{cidr}），请使用更小的网段（最多1024个IP地址）");
+                            }
+                            
+                            // 计算网络地址（去掉主机位）
+                            var subnetMask = 0xFFFFFFFF << hostBits;
+                            var actualNetworkInt = networkInt & subnetMask;
+                            
+                            // 生成网段内的所有IP地址
+                            for (uint i = 1; i < hostCount - 1; i++) // 跳过网络地址和广播地址
+                            {
+                                var ipInt = actualNetworkInt + i;
+                                var bytes = BitConverter.GetBytes(ipInt).Reverse().ToArray();
+                                var ip = new IPAddress(bytes);
+                                ipAddresses.Add(ip.ToString());
+                            }
+                        }
+                        else
+                        {
+                            throw new ArgumentException("CIDR格式不正确，请使用格式：IP地址/子网位数（如：172.10.20.1/24）");
+                        }
+                    }
+                }
+                else if (input.Contains("-"))
                 {
                     // IP范围格式: 192.168.1.1-192.168.1.100
                     var parts = input.Split('-');
@@ -585,7 +697,7 @@ namespace NetToolkit
         {
             try
             {
-                MessageBox.Show("网络工具包 v1.0\n\n功能:\n• 静态IP地址设置\n• 批量Ping网络测试\n\n特性:\n• Material Design界面\n• 异步操作支持\n• 完整的异常处理\n\n开发: NetToolkit", 
+                MessageBox.Show("网络工具包 v1.1\n\n功能:\n• 静态IP地址设置\n• 批量Ping网络测试\n  - 支持单个IP\n  - 支持IP范围 (192.168.1.1-192.168.1.100)\n  - 支持网段CIDR (172.10.20.1/24)\n  - 支持逗号分隔列表\n\n特性:\n• Material Design界面\n• 异步操作支持\n• 完整的异常处理\n\n开发: NetToolkit", 
                               "关于", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
