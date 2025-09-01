@@ -50,7 +50,7 @@
 ### 编译运行
 ```bash
 # 克隆项目
-git clone <repository-url>
+git clone https://github.com/HackSynth/NetToolkit
 cd NetToolkit
 
 # 编译项目
@@ -112,7 +112,7 @@ dotnet run
 
 ## 📄 许可证
 
-Copyright © 2024 NetToolkit. 保留所有权利。
+Copyright © 2025 NetToolkit. 保留所有权利。
 
 ---
 
