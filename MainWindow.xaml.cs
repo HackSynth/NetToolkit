@@ -194,6 +194,9 @@ namespace NetToolkit
                         ShowErrorMessage("默认网关格式不正确");
                         return;
                     }
+
+                    // 静态IP设置前的额外状态提示
+                    SetStatusMessage("正在检测IP冲突...");
                 }
 
                 await _networkManager.ApplyNetworkConfigurationAsync(selectedInterface.Id, config);
