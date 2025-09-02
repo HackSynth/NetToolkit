@@ -333,6 +333,7 @@ namespace NetToolkit
             
             var completedCount = 0;
             var lockObject = new object();
+            var allResults = new List<PingResult>();
 
             var tasks = ipAddresses.Select(async ip =>
             {
@@ -341,12 +342,17 @@ namespace NetToolkit
                 {
                     var result = await PingSingleAddressAsync(ip, timeout, cancellationToken);
                     
-                    // 使用低优先级调度器实时更新UI，避免阻塞主线程
+                    // 收集所有结果，稍后统一排序
+                    lock (allResults)
+                    {
+                        allResults.Add(result);
+                    }
+                    
+                    // 更新进度条和计数器
                     _ = Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                     {
                         try
                         {
-                            _pingResults.Add(result);
                             UpdateCounters(result);
                             
                             lock (lockObject)
@@ -375,15 +381,45 @@ namespace NetToolkit
                 // 使用ConfigureAwait(false)避免死锁，提高性能
                 await Task.WhenAll(tasks).ConfigureAwait(false);
                 
+                // 所有ping完成后，对结果进行排序并添加到UI
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    SetStatusMessage($"Ping操作完成，共处理{ipAddresses.Count}个IP地址");
+                    try
+                    {
+                        // 按照状态优先级和IP地址排序
+                        var sortedResults = SortPingResults(allResults);
+                        
+                        // 清空现有结果并添加排序后的结果
+                        _pingResults.Clear();
+                        foreach (var result in sortedResults)
+                        {
+                            _pingResults.Add(result);
+                        }
+                        
+                        SetStatusMessage($"Ping操作完成，共处理{ipAddresses.Count}个IP地址");
+                    }
+                    catch (Exception ex)
+                    {
+                        SetStatusMessage($"排序结果失败: {ex.Message}");
+                    }
                 });
             }
             catch (OperationCanceledException)
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
+                    // 即使取消也要显示已完成的排序结果
+                    try
+                    {
+                        var sortedResults = SortPingResults(allResults);
+                        _pingResults.Clear();
+                        foreach (var result in sortedResults)
+                        {
+                            _pingResults.Add(result);
+                        }
+                    }
+                    catch { }
+                    
                     SetStatusMessage($"Ping操作已取消，已完成{completedCount}/{ipAddresses.Count}个IP地址");
                 });
             }
@@ -399,6 +435,51 @@ namespace NetToolkit
             {
                 semaphore?.Dispose();
             }
+        }
+
+        private List<PingResult> SortPingResults(List<PingResult> results)
+        {
+            try
+            {
+                return results.OrderBy(r => GetStatusPriority(r.Status))
+                            .ThenBy(r => ParseIpAddressForSorting(r.IpAddress))
+                            .ToList();
+            }
+            catch (Exception ex)
+            {
+                SetStatusMessage($"排序失败，使用原始顺序: {ex.Message}");
+                return results;
+            }
+        }
+
+        private int GetStatusPriority(string status)
+        {
+            return status switch
+            {
+                "成功" => 1,
+                "失败" => 2,
+                "超时" => 3,
+                "错误" => 4,
+                "已取消" => 5,
+                _ => 6
+            };
+        }
+
+        private uint ParseIpAddressForSorting(string ipAddress)
+        {
+            try
+            {
+                if (IPAddress.TryParse(ipAddress, out var ip) && ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    var bytes = ip.GetAddressBytes();
+                    return BitConverter.ToUInt32(bytes.Reverse().ToArray(), 0);
+                }
+            }
+            catch
+            {
+                // 如果解析失败，返回最大值，使其排在最后
+            }
+            return uint.MaxValue;
         }
 
         private async Task<PingResult> PingSingleAddressAsync(string ipAddress, int timeout, CancellationToken cancellationToken)
