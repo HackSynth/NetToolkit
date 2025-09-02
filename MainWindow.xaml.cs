@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using MaterialDesignThemes.Wpf;
 
 namespace NetToolkit
@@ -17,6 +18,7 @@ namespace NetToolkit
     {
         private readonly NetworkManager _networkManager;
         private readonly ObservableCollection<PingResult> _pingResults;
+        private readonly CollectionViewSource _pingResultsViewSource;
         private CancellationTokenSource _pingCancellationTokenSource;
         private int _successCount, _failCount, _timeoutCount;
 
@@ -25,6 +27,13 @@ namespace NetToolkit
             InitializeComponent();
             _networkManager = new NetworkManager();
             _pingResults = new ObservableCollection<PingResult>();
+            
+            // 创建CollectionViewSource用于分组
+            _pingResultsViewSource = new CollectionViewSource
+            {
+                Source = _pingResults
+            };
+            _pingResultsViewSource.GroupDescriptions.Add(new PropertyGroupDescription("Status"));
             
             // 等待UI加载完成后再进行初始化
             Loaded += MainWindow_Loaded;
@@ -36,7 +45,7 @@ namespace NetToolkit
             try
             {
                 if (PingResultDataGrid != null)
-                    PingResultDataGrid.ItemsSource = _pingResults;
+                    PingResultDataGrid.ItemsSource = _pingResultsViewSource.View;
                 
                 await LoadNetworkInterfacesAsync();
             }
@@ -396,6 +405,9 @@ namespace NetToolkit
                             _pingResults.Add(result);
                         }
                         
+                        // 刷新分组视图
+                        _pingResultsViewSource.View.Refresh();
+                        
                         SetStatusMessage($"Ping操作完成，共处理{ipAddresses.Count}个IP地址");
                     }
                     catch (Exception ex)
@@ -417,6 +429,8 @@ namespace NetToolkit
                         {
                             _pingResults.Add(result);
                         }
+                        // 刷新分组视图
+                        _pingResultsViewSource.View.Refresh();
                     }
                     catch { }
                     
@@ -441,6 +455,7 @@ namespace NetToolkit
         {
             try
             {
+                // 按照状态优先级分组，然后在每个组内按IP地址排序
                 return results.OrderBy(r => GetStatusPriority(r.Status))
                             .ThenBy(r => ParseIpAddressForSorting(r.IpAddress))
                             .ToList();

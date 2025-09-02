@@ -208,6 +208,62 @@
                                     AutoGenerateColumns="False" CanUserAddRows="False"
                                     materialDesign:DataGridAssist.CellPadding="8,4"
                                     materialDesign:DataGridAssist.ColumnHeaderPadding="8,4">
+                                <DataGrid.GroupStyle>
+                                    <GroupStyle>
+                                        <GroupStyle.HeaderTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Margin="8,4">
+                                                    <materialDesign:PackIcon Kind="Circle" Height="12" Width="12" 
+                                                                           VerticalAlignment="Center" Margin="0,0,8,0">
+                                                        <materialDesign:PackIcon.Style>
+                                                            <Style TargetType="materialDesign:PackIcon">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Name}" Value="成功">
+                                                                        <Setter Property="Foreground" Value="Green"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Name}" Value="失败">
+                                                                        <Setter Property="Foreground" Value="Red"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Name}" Value="超时">
+                                                                        <Setter Property="Foreground" Value="Orange"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Name}" Value="错误">
+                                                                        <Setter Property="Foreground" Value="DarkRed"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Name}" Value="已取消">
+                                                                        <Setter Property="Foreground" Value="Gray"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </materialDesign:PackIcon.Style>
+                                                    </materialDesign:PackIcon>
+                                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding ItemCount, StringFormat=' ({0}个)'}" 
+                                                             Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                             VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </GroupStyle.HeaderTemplate>
+                                        <GroupStyle.ContainerStyle>
+                                            <Style TargetType="{x:Type GroupItem}">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="{x:Type GroupItem}">
+                                                            <Expander IsExpanded="True" 
+                                                                    Style="{StaticResource MaterialDesignExpander}"
+                                                                    materialDesign:ExpanderAssist.HorizontalHeaderPadding="0">
+                                                                <Expander.Header>
+                                                                    <ContentPresenter/>
+                                                                </Expander.Header>
+                                                                <ItemsPresenter/>
+                                                            </Expander>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </GroupStyle.ContainerStyle>
+                                    </GroupStyle>
+                                </DataGrid.GroupStyle>
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="IP地址" Binding="{Binding IpAddress}" Width="120"/>
                                     <DataGridTextColumn Header="状态" Binding="{Binding Status}" Width="80">
@@ -222,6 +278,12 @@
                                                     </Trigger>
                                                     <Trigger Property="Text" Value="超时">
                                                         <Setter Property="Foreground" Value="Orange"/>
+                                                    </Trigger>
+                                                    <Trigger Property="Text" Value="错误">
+                                                        <Setter Property="Foreground" Value="DarkRed"/>
+                                                    </Trigger>
+                                                    <Trigger Property="Text" Value="已取消">
+                                                        <Setter Property="Foreground" Value="Gray"/>
                                                     </Trigger>
                                                 </Style.Triggers>
                                             </Style>
