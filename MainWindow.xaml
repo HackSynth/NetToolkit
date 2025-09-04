@@ -267,8 +267,9 @@
                                 <TextBlock DockPanel.Dock="Left" Text="Ping结果" Style="{StaticResource HeaderTextStyle}"/>
                                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                                     <ProgressBar x:Name="PingProgressBar" 
-                                               Width="200" Margin="0,0,12,0" Visibility="Collapsed"
-                                               Style="{StaticResource NetworkProgressBar}"/>
+                                               Width="160" Height="4" Margin="0,0,12,0" Visibility="Collapsed"
+                                               Style="{StaticResource MaterialDesignLinearProgressBar}"
+                                               VerticalAlignment="Center"/>
                                     <Button Content="导出结果" 
                                           Style="{StaticResource MaterialDesignFlatButton}"
                                           Margin="0,0,8,0">
@@ -331,14 +332,16 @@
                                                 <Setter Property="Template">
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="{x:Type GroupItem}">
-                                                            <Expander IsExpanded="True" 
-                                                                    Style="{StaticResource MaterialDesignExpander}"
-                                                                    materialDesign:ExpanderAssist.HorizontalHeaderPadding="0">
-                                                                <Expander.Header>
+                                                            <StackPanel>
+                                                                <Border Background="{DynamicResource MaterialDesignCardBackground}"
+                                                                      BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                                                      BorderThickness="0,0,0,1"
+                                                                      Padding="8,6"
+                                                                      Margin="0,4,0,2">
                                                                     <ContentPresenter/>
-                                                                </Expander.Header>
-                                                                <ItemsPresenter/>
-                                                            </Expander>
+                                                                </Border>
+                                                                <ItemsPresenter Margin="0,0,0,8"/>
+                                                            </StackPanel>
                                                         </ControlTemplate>
                                                     </Setter.Value>
                                                 </Setter>
@@ -380,43 +383,55 @@
                     </materialDesign:Card>
 
                     <!-- 统计信息卡片 -->
-                    <materialDesign:Card Grid.Row="2" Style="{StaticResource ModuleCardStyle}">
+                    <materialDesign:Card Grid.Row="2" Style="{StaticResource NetworkToolkitCard}" Margin="12,8,12,0">
                         <StackPanel>
-                            <TextBlock Text="统计信息" Style="{StaticResource SubHeaderTextStyle}"/>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                <materialDesign:Card Grid.Column="0" Margin="0,0,8,0" Padding="12">
+                            <TextBlock Text="统计信息" Style="{StaticResource SubHeaderTextStyle}" Margin="0,0,0,12"/>
+                            <UniformGrid Columns="3" Rows="1">
+                                <Border Background="{DynamicResource MaterialDesignSelection}" 
+                                      CornerRadius="8" Padding="16,12" Margin="0,0,8,0">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <materialDesign:PackIcon Kind="CheckCircle" Foreground="Green" 
-                                                               Height="20" Width="20" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="SuccessCountText" Text="成功: 0" Margin="8,0,0,0" 
-                                                 FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                               Height="24" Width="24" VerticalAlignment="Center"/>
+                                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock x:Name="SuccessCountText" Text="0" FontSize="20" 
+                                                     FontWeight="Bold" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="成功" FontSize="12" 
+                                                     Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                     HorizontalAlignment="Center"/>
+                                        </StackPanel>
                                     </StackPanel>
-                                </materialDesign:Card>
+                                </Border>
                                 
-                                <materialDesign:Card Grid.Column="1" Margin="4,0" Padding="12">
+                                <Border Background="{DynamicResource MaterialDesignSelection}" 
+                                      CornerRadius="8" Padding="16,12" Margin="4,0">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <materialDesign:PackIcon Kind="CloseCircle" Foreground="Red" 
-                                                               Height="20" Width="20" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="FailCountText" Text="失败: 0" Margin="8,0,0,0" 
-                                                 FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                               Height="24" Width="24" VerticalAlignment="Center"/>
+                                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock x:Name="FailCountText" Text="0" FontSize="20" 
+                                                     FontWeight="Bold" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="失败" FontSize="12" 
+                                                     Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                     HorizontalAlignment="Center"/>
+                                        </StackPanel>
                                     </StackPanel>
-                                </materialDesign:Card>
+                                </Border>
                                 
-                                <materialDesign:Card Grid.Column="2" Margin="8,0,0,0" Padding="12">
+                                <Border Background="{DynamicResource MaterialDesignSelection}" 
+                                      CornerRadius="8" Padding="16,12" Margin="8,0,0,0">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <materialDesign:PackIcon Kind="ClockOutline" Foreground="Orange" 
-                                                               Height="20" Width="20" VerticalAlignment="Center"/>
-                                        <TextBlock x:Name="TimeoutCountText" Text="超时: 0" Margin="8,0,0,0" 
-                                                 FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                               Height="24" Width="24" VerticalAlignment="Center"/>
+                                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock x:Name="TimeoutCountText" Text="0" FontSize="20" 
+                                                     FontWeight="Bold" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="超时" FontSize="12" 
+                                                     Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                                                     HorizontalAlignment="Center"/>
+                                        </StackPanel>
                                     </StackPanel>
-                                </materialDesign:Card>
-                            </Grid>
+                                </Border>
+                            </UniformGrid>
                         </StackPanel>
                     </materialDesign:Card>
                 </Grid>

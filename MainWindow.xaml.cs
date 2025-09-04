@@ -742,11 +742,11 @@ namespace NetToolkit
             try
             {
                 if (SuccessCountText != null)
-                    SuccessCountText.Text = $"成功: {_successCount}";
+                    SuccessCountText.Text = _successCount.ToString();
                 if (FailCountText != null)
-                    FailCountText.Text = $"失败: {_failCount}";
+                    FailCountText.Text = _failCount.ToString();
                 if (TimeoutCountText != null)
-                    TimeoutCountText.Text = $"超时: {_timeoutCount}";
+                    TimeoutCountText.Text = _timeoutCount.ToString();
             }
             catch (Exception ex)
             {
