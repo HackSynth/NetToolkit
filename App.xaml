@@ -6,9 +6,72 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="Blue" SecondaryColor="Cyan" />
+                <!-- Material Design 3 主题配置 -->
+                <materialDesign:BundledTheme 
+                    BaseTheme="Light" 
+                    PrimaryColor="Indigo" 
+                    SecondaryColor="DeepPurple"
+                    ColorAdjustment="{materialDesign:ColorAdjustment}" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            
+            <!-- 自定义样式 -->
+            <Style x:Key="NetworkToolkitCard" TargetType="materialDesign:Card">
+                <Setter Property="Padding" Value="20"/>
+                <Setter Property="Margin" Value="12"/>
+                <Setter Property="materialDesign:ShadowAssist.ShadowDepth" Value="Depth2"/>
+                <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp4"/>
+            </Style>
+            
+            <Style x:Key="NetworkToolkitButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="Padding" Value="16,0"/>
+                <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="4"/>
+            </Style>
+            
+            <Style x:Key="NetworkToolkitOutlineButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="Padding" Value="16,0"/>
+                <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="4"/>
+            </Style>
+            
+            <!-- 动画效果样式 -->
+            <Style x:Key="AnimatedCard" TargetType="materialDesign:Card" BasedOn="{StaticResource NetworkToolkitCard}">
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <EventTrigger RoutedEvent="MouseEnter">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" 
+                                               To="1.02" Duration="0:0:0.2"/>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" 
+                                               To="1.02" Duration="0:0:0.2"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                    <EventTrigger RoutedEvent="MouseLeave">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" 
+                                               To="1.0" Duration="0:0:0.2"/>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" 
+                                               To="1.0" Duration="0:0:0.2"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Style.Triggers>
+            </Style>
+            
+            <!-- 进度指示器样式 -->
+            <Style x:Key="NetworkProgressBar" TargetType="ProgressBar" BasedOn="{StaticResource MaterialDesignLinearProgressBar}">
+                <Setter Property="Height" Value="4"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="materialDesign:TransitionAssist.DisableTransitions" Value="False"/>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
