@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         Title="网络工具包 - NetToolkit" 
-        Height="700" Width="1000"
+        Height="800" Width="1200" MinHeight="600" MinWidth="900"
         WindowStartupLocation="CenterScreen"
+        WindowState="Normal"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"
         TextElement.FontSize="13"
@@ -71,7 +72,7 @@
 
         <!-- 主内容区域 -->
         <TabControl Grid.Row="1" Style="{StaticResource MaterialDesignTabControl}" 
-                    Margin="16,8,16,8" 
+                    Margin="12,8,12,8" 
                     materialDesign:ColorZoneAssist.Mode="PrimaryLight">
             
             <!-- 静态IP设置选项卡 -->
@@ -86,10 +87,10 @@
                     </DataTemplate>
                 </TabItem.HeaderTemplate>
                 
-                <Grid Margin="16">
+                <Grid Margin="12">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*" MinWidth="350"/>
+                        <ColumnDefinition Width="1*" MinWidth="350"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- 网络接口选择 -->
@@ -203,10 +204,10 @@
                     </DataTemplate>
                 </TabItem.HeaderTemplate>
                 
-                <Grid Margin="16">
+                <Grid Margin="12">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*" MinHeight="300"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
@@ -214,9 +215,9 @@
                     <materialDesign:Card Grid.Row="0" Style="{StaticResource AnimatedCard}">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="1*"/>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="2*" MinWidth="300"/>
+                                <ColumnDefinition Width="120" MinWidth="120"/>
+                                <ColumnDefinition Width="Auto" MinWidth="180"/>
                             </Grid.ColumnDefinitions>
                             
                             <TextBox Grid.Column="0" x:Name="IpRangeTextBox" 
@@ -350,8 +351,8 @@
                                     </GroupStyle>
                                 </DataGrid.GroupStyle>
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="IP地址" Binding="{Binding IpAddress}" Width="120"/>
-                                    <DataGridTextColumn Header="状态" Binding="{Binding Status}" Width="80">
+                                    <DataGridTextColumn Header="IP地址" Binding="{Binding IpAddress}" Width="110" MinWidth="100"/>
+                                    <DataGridTextColumn Header="状态" Binding="{Binding Status}" Width="65" MinWidth="60">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Style.Triggers>
@@ -374,16 +375,16 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
-                                    <DataGridTextColumn Header="响应时间(ms)" Binding="{Binding ResponseTime}" Width="100"/>
-                                    <DataGridTextColumn Header="测试时间" Binding="{Binding TestTime}" Width="140"/>
-                                    <DataGridTextColumn Header="备注" Binding="{Binding Notes}" Width="*"/>
+                                    <DataGridTextColumn Header="响应时间(ms)" Binding="{Binding ResponseTime}" Width="85" MinWidth="80"/>
+                                    <DataGridTextColumn Header="测试时间" Binding="{Binding TestTime}" Width="120" MinWidth="110"/>
+                                    <DataGridTextColumn Header="备注" Binding="{Binding Notes}" Width="*" MinWidth="100"/>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Grid>
                     </materialDesign:Card>
 
                     <!-- 统计信息卡片 -->
-                    <materialDesign:Card Grid.Row="2" Style="{StaticResource NetworkToolkitCard}" Margin="12,8,12,0">
+                    <materialDesign:Card Grid.Row="2" Style="{StaticResource NetworkToolkitCard}" Margin="8,4,8,0">
                         <StackPanel>
                             <TextBlock Text="统计信息" Style="{StaticResource SubHeaderTextStyle}" Margin="0,0,0,12"/>
                             <UniformGrid Columns="3" Rows="1">

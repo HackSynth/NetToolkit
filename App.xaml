@@ -17,8 +17,8 @@
             
             <!-- 自定义样式 -->
             <Style x:Key="NetworkToolkitCard" TargetType="materialDesign:Card">
-                <Setter Property="Padding" Value="20"/>
-                <Setter Property="Margin" Value="12"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="8"/>
                 <Setter Property="materialDesign:ShadowAssist.ShadowDepth" Value="Depth2"/>
                 <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp4"/>
             </Style>
